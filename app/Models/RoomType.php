@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 class RoomType extends Model
 {
@@ -12,8 +13,12 @@ class RoomType extends Model
         'extra_person_fee'
     ];
     // 2. Deklarasi Relasi: Satu Tipe Kamar memiliki BANYAK Kamar
-    public function rooms()
+    public function rooms(): HasMany
     {
         return $this->hasMany(Room::class);
+    }
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
     }
 }
