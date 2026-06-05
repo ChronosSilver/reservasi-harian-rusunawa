@@ -21,26 +21,25 @@ class RoomSeeder extends Seeder
             'extra_person_fee' => 25000,
         ]);
 
-        // Kemudian, kita buat beberapa kamar dengan berbagai kombinasi
-        Room::create([
-            'room_type_id' => $tipeAC->id,
-            'room_number' => '101',
-            'building' => 'Rusunawa Putri',
-            'status' => 'available',
-        ]);
+        $rooms = [
+            ['room_number' => '101', 'room_type_id' => $tipeAC->id, 'status' => 'available'],
+            ['room_number' => '102', 'room_type_id' => $tipeKipas->id, 'status' => 'available'],
+            ['room_number' => '103', 'room_type_id' => $tipeKipas->id, 'status' => 'available'],
+            ['room_number' => '104', 'room_type_id' => $tipeAC->id, 'status' => 'maintenance'],
+            ['room_number' => '105', 'room_type_id' => $tipeAC->id, 'status' => 'available'],
+            ['room_number' => '106', 'room_type_id' => $tipeAC->id, 'status' => 'available'],
+        ];
 
-        Room::create([
-            'room_type_id' => $tipeKipas->id,
-            'room_number' => '102',
-            'building' => 'Rusunawa Putri',
-            'status' => 'occupied', // Simulasi sudah dipesan
-        ]);
-
-        Room::create([
-            'room_type_id' => $tipeAC->id,
-            'room_number' => '103', // Nomor sama, gedung berbeda
-            'building' => 'Rusun Inn',
-            'status' => 'maintenance', // Simulasi sedang rusak
-        ]);
+        // 3. Eksekusi data ke pangkalan data
+        foreach ($rooms as $room) {
+            Room::firstOrCreate(
+                ['room_number' => $room['room_number']], // Kunci pencarian agar tidak ganda
+                [
+                    'room_type_id' => $room['room_type_id'],
+                    'building' => 'Rusunawa Putri', // Gedung diseragamkan secara mutlak
+                    'status' => $room['status'],
+                ]
+            );
+        }
     }
 }
