@@ -22,8 +22,11 @@ class RoomResource extends Resource
 {
     protected static ?string $model = Room::class;
 
+    protected static ?string $modelLabel = 'Kamar';
+    protected static ?string $pluralModelLabel = 'Kamar';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-    protected static ?string $navigationLabel = 'List Kamar';
+    protected static ?string $navigationLabel = 'Kamar';
+    protected static ?int $navigationSort = 3;
     protected static ?string $recordTitleAttribute = 'room_number';
 
     public static function form(Schema $schema): Schema

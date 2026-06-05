@@ -22,8 +22,11 @@ class RoomTypeResource extends Resource
 {
     protected static ?string $model = RoomType::class;
 
+    protected static ?string $modelLabel = 'Tipe Kamar';
+    protected static ?string $pluralModelLabel = 'Tipe Kamar';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static ?string $navigationLabel = 'Tipe Kamar';
+    protected static ?int $navigationSort = 4;
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
@@ -36,7 +39,7 @@ class RoomTypeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Nama Tipe')
+                    ->label('Tipe Kamar')
                     ->badge()
                     ->searchable(),
 
@@ -46,7 +49,7 @@ class RoomTypeResource extends Resource
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('extra_person_fee')
-                    ->label('Biaya Tambahan')
+                    ->label('Biaya Ekstra')
                     ->money('IDR')
                     ->sortable(),
             ])

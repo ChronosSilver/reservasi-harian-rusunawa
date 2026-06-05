@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('password');
             
             // Atribut Identitas & Kontak
+            $table->enum('gender', ['L', 'P'])->nullable(); // Boleh kosong saat register awal
             $table->enum('identity_type', ['NIM', 'NIP', 'NIK'])->nullable();
             $table->string('identity_number')->unique()->nullable();
             $table->string('phone_number', 15)->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration
             $table->enum('role', ['admin', 'penyewa'])->default('penyewa');
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes(); // Menambahkan Soft Deletes
         });
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();

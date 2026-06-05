@@ -23,8 +23,11 @@ class ReservationResource extends Resource
 {
     protected static ?string $model = Reservation::class;
 
+    protected static ?string $modelLabel = 'Reservasi';
+    protected static ?string $pluralModelLabel = 'Reservasi';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static ?string $navigationLabel = 'Reservasi';
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -41,7 +44,7 @@ class ReservationResource extends Resource
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('roomType.name')
-                ->label('Tipe')
+                ->label('Tipe Kamar')
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('room.room_number')
@@ -51,18 +54,18 @@ class ReservationResource extends Resource
 
             // 3. Kontrak Waktu (Format Manusia)
             Tables\Columns\TextColumn::make('check_in_date')
-                ->label('Check-In')
+                ->label('Tanggal Check-In')
                 ->date('d M Y') // Output: 10 Aug 2026
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('check_out_date')
-                ->label('Check-Out')
+                ->label('Tanggal Check-Out')
                 ->date('d M Y')
                 ->sortable(),
 
             // 4. Finansial
             Tables\Columns\TextColumn::make('total_price')
-                ->label('Tagihan')
+                ->label('Total Tagihan')
                 ->money('IDR', locale: 'id') // Output: Rp 150.000,00
                 ->sortable(),
 

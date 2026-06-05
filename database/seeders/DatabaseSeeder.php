@@ -14,15 +14,17 @@ class DatabaseSeeder extends Seeder
         $admin->email = 'admin@rusunawa.com';
         $admin->password = Hash::make('password123');
         $admin->role = 'admin'; 
+        $admin->gender = 'P'; // Mengatur admin sebagai perempuan
         $admin->phone_number = '081122334455';
         $admin->save();
 
-        //Akun Penyewa (Mahasiswa)
+        //Akun Penyewa (Mahasiswa Putri)
         $penyewa = new User();
-        $penyewa->name = 'Mahasiswa Untan';
+        $penyewa->name = 'Mahasiswi Untan'; // Diubah menjadi Mahasiswi
         $penyewa->email = 'penyewa@student.untan.ac.id';
         $penyewa->password = Hash::make('password123');
         $penyewa->role = 'penyewa';
+        $penyewa->gender = 'P'; // Mengatur default perempuan
         $penyewa->identity_type = 'NIM';
         $penyewa->identity_number = 'H105123456'; // Contoh format NIM
         $penyewa->phone_number = '089988776655';

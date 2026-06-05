@@ -18,7 +18,11 @@ class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
+    protected static ?string $modelLabel = 'Pembayaran';
+    protected static ?string $pluralModelLabel = 'Pembayaran';
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $navigationLabel = 'Pembayaran';
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {

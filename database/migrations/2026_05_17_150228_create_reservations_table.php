@@ -26,6 +26,7 @@ return new class extends Migration
             // 4. Aturan Bisnis & Finansial (Nilai Tagihan)
             $table->integer('guest_count')->default(1);
             $table->decimal('total_price', 10, 2); 
+            $table->enum('payment_method', ['transfer', 'cash'])->default('transfer');
             // 5. Siklus Hidup Operasional (Tanpa Status Pembayaran)
             $table->enum('status', ['pending', 'confirmed', 'active', 'completed', 'cancelled'])->default('pending');
             // 6. Fleksibilitas Komunikasi

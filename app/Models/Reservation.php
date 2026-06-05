@@ -11,6 +11,19 @@ class Reservation extends Model
 {
     use HasFactory;
 
+    protected static function booted()
+    {
+        // Otomatisasi: Setiap kali Reservasi baru dibuat (baik oleh Admin maupun User nanti),
+        // sistem akan otomatis men-generate data Pembayaran berstatus 'pending'.
+        static::created(function (Reservation $reservation) {
+            $reservation->payments()->create([
+                'amount' => $reservation->total_price,
+                'status' => 'pending',
+                'payment_date' => null,
+            ]);
+        });
+    }
+
     // Kolom yang diizinkan untuk diisi secara massal
     protected $fillable = [
         'user_id',
@@ -22,6 +35,7 @@ class Reservation extends Model
         'actual_check_out',
         'guest_count',
         'total_price',
+        'payment_method',
         'status',
         'notes',
     ];

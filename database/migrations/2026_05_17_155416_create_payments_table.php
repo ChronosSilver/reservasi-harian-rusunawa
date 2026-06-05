@@ -11,10 +11,11 @@ return new class extends Migration
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reservation_id')->constrained('reservations')->cascadeOnDelete();
-            $table->decimal('amount', 10, 2); 
-            $table->enum('payment_method', ['transfer', 'cash']);
+            $table->decimal('amount', 10, 2);
+            $table->string('sender_name')->nullable(); // Nama Pengirim di Rekening
+            $table->string('bank_name')->nullable(); // Nama Bank Pengirim
             $table->string('payment_proof')->nullable(); // Boleh kosong jika bayar tunai (cash)
-            $table->enum('status', ['pending', 'verified', 'rejected', 'refunded'])->default('pending');
+            $table->enum('status', ['pending', 'paid', 'verified', 'rejected', 'refunded'])->default('pending');
             $table->timestamp('payment_date')->nullable();
             $table->timestamps(); 
         });
