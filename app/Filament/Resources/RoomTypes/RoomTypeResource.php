@@ -24,8 +24,9 @@ class RoomTypeResource extends Resource
 
     protected static ?string $modelLabel = 'Tipe Kamar';
     protected static ?string $pluralModelLabel = 'Tipe Kamar';
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSwatch;
     protected static ?string $navigationLabel = 'Tipe Kamar';
+    protected static string|\UnitEnum|null $navigationGroup = 'Fasilitas Rusun';
     protected static ?int $navigationSort = 4;
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -69,7 +70,7 @@ class RoomTypeResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\RoomsRelationManager::class,
         ];
     }
 

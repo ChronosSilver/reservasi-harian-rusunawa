@@ -10,13 +10,14 @@ class PaymentForm
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Informasi Pembayaran')
-                    ->description('Formulir pencatatan dan validasi pembayaran.')
-                    ->schema([
-                        // 1. Relasi ke Reservasi
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('Informasi Pembayaran')
+                        ->description('Formulir pencatatan dan validasi pembayaran.')
+                        ->schema([
+                            // 1. Relasi ke Reservasi
                         \Filament\Forms\Components\Select::make('reservation_id')
                             ->relationship('reservation', 'id')
-                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->user->name)
+                            ->getOptionLabelFromRecordUsing(fn ($record) => ($record->ticket_code ?? 'TICK-N/A') . ' - ' . $record->user->name)
                             ->required()
                             ->searchable()
                             ->preload()
@@ -34,6 +35,7 @@ class PaymentForm
                                 }
                             })
                             ->label('Pilih Reservasi')
+                            ->disabled(fn (string $operation) => $operation === 'edit')
                             ->columnSpanFull(), // Dibuat 1 kolom penuh per baris
 
                         // 2. Data Uang (Dihitung Otomatis)
@@ -60,11 +62,11 @@ class PaymentForm
                         \Filament\Forms\Components\Select::make('status')
                             ->required()
                             ->options([
-                                'pending' => 'Pending (Menunggu Pembayaran)',
-                                'paid' => 'Paid (Menunggu Verifikasi)',
-                                'verified' => 'Verified (Sah/Lunas)',
-                                'rejected' => 'Rejected (Ditolak/Palsu)',
-                                'refunded' => 'Refunded (Dikembalikan)',
+                                'pending' => 'Pending',
+                                'paid' => 'Paid',
+                                'verified' => 'Verified',
+                                'rejected' => 'Rejected',
+                                'refunded' => 'Refunded',
                             ])
                             ->default('pending')
                             ->disabled()
@@ -72,11 +74,19 @@ class PaymentForm
                             ->label('Status Validasi Pembayaran')
                             ->columnSpanFull(), // Dibuat 1 kolom penuh per baris
 
-                        // Waktu pembayaran disembunyikan (otomatis diisi oleh sistem)
                         \Filament\Forms\Components\Hidden::make('payment_date')
                             ->default(now()),
 
-                        // 5. Bukti Fisik (Diletakkan Paling Bawah)
+                        \Filament\Forms\Components\TextInput::make('bank_account')
+                            ->label('Nomor Rekening')
+                            ->nullable()
+                            ->columnSpanFull(),
+
+                        \Filament\Forms\Components\TextInput::make('bank_name')
+                            ->label('Nama Bank')
+                            ->nullable()
+                            ->columnSpanFull(),
+
                         \Filament\Forms\Components\FileUpload::make('payment_proof')
                             ->directory('bukti-transfer')
                             ->disk('public')
@@ -84,8 +94,65 @@ class PaymentForm
                             ->nullable()
                             ->required(fn ($get) => $get('payment_method') === 'transfer' && $get('status') === 'verified')
                             ->label('Foto Bukti Transfer (Abaikan jika tunai)')
-                            ->columnSpanFull(), // Dibuat 1 kolom penuh per baris
+                            ->hidden(fn (string $operation) => $operation === 'edit')
+                            ->columnSpanFull(),
+                            
+                        \Filament\Forms\Components\Placeholder::make('payment_proof_preview')
+                            ->label('Foto Bukti Transfer (Abaikan jika tunai)')
+                            ->content(function ($record) {
+                                if (!$record || !$record->payment_proof) return 'Tidak ada foto bukti transfer.';
+                                $url = asset('storage/' . $record->payment_proof);
+                                return new \Illuminate\Support\HtmlString('
+                                    <div x-data="{ open: false }">
+                                        <img src="'.$url.'" @click="open = true" class="h-48 rounded-lg cursor-pointer transition hover:opacity-80 border border-gray-200 dark:border-gray-700 shadow-sm" />
+                                        
+                                        <div x-show="open" style="display: none;" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm" @click="open = false">
+                                            <img src="'.$url.'" class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" @click.stop />
+                                            <button @click="open = false" class="absolute top-6 right-6 text-white hover:text-gray-300 bg-gray-900/50 rounded-full p-2">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ');
+                            })
+                            ->hidden(fn (string $operation) => $operation === 'create')
+                            ->columnSpanFull(),
+
+                        \Filament\Forms\Components\Textarea::make('cancellation_reason')
+                            ->label('Alasan Pembatalan (Penyewa)')
+                            ->nullable()
+                            ->visible(function ($record) {
+                                if (!$record || !$record->reservation) return false;
+                                return in_array($record->reservation->status, ['refunding', 'cancelled']);
+                            })
+                            ->columnSpanFull(),
+
+                        \Filament\Forms\Components\FileUpload::make('refund_proof')
+                            ->label('Bukti Transfer Refund')
+                            ->directory('bukti-refund')
+                            ->disk('public')
+                            ->image()
+                            ->nullable()
+                            ->visible(function ($record) {
+                                if (!$record || !$record->reservation) return false;
+                                return in_array($record->reservation->status, ['refunding', 'cancelled']);
+                            })
+                            ->columnSpanFull(),
                     ]),
-            ]);
+                ])->columnSpan(['lg' => 2]),
+
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('Informasi Data')
+                        ->schema([
+                            \Filament\Forms\Components\Placeholder::make('created_at')
+                                ->label('Dibuat pada')
+                                ->content(fn ($record) => $record ? $record->created_at->diffForHumans() : '-'),
+                                
+                            \Filament\Forms\Components\Placeholder::make('updated_at')
+                                ->label('Terakhir diubah')
+                                ->content(fn ($record) => $record ? $record->updated_at->diffForHumans() : '-'),
+                        ])->hidden(fn (string $operation) => $operation === 'create'),
+                ])->columnSpan(['lg' => 1]),
+            ])->columns(3);
     }
 }

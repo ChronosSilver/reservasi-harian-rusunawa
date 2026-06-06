@@ -17,6 +17,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->foreignId('room_type_id')->constrained('room_types')->cascadeOnDelete();
             $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
+            
+            // Atribut Ticketing
+            $table->string('ticket_code')->unique()->nullable();
+            
             // 2. Dimensi Waktu Kontrak
             $table->date('check_in_date');
             $table->date('check_out_date');
@@ -28,7 +32,7 @@ return new class extends Migration
             $table->decimal('total_price', 10, 2); 
             $table->enum('payment_method', ['transfer', 'cash'])->default('transfer');
             // 5. Siklus Hidup Operasional (Tanpa Status Pembayaran)
-            $table->enum('status', ['pending', 'confirmed', 'active', 'completed', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'confirmed', 'active', 'completed', 'cancelled', 'refunding'])->default('pending');
             // 6. Fleksibilitas Komunikasi
             $table->text('notes')->nullable();
             $table->timestamps(); 

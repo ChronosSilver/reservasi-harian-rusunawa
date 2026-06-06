@@ -44,20 +44,76 @@ class ReservationForm
     {
         return $schema
             ->components([
-                \Filament\Schemas\Components\Section::make('Informasi Reservasi')
-                    ->description('Detail penyewa, kamar, dan jadwal inap.')
-                    ->schema([
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('Informasi Reservasi')
+                        ->description('Detail penyewa, kamar, dan jadwal inap.')
+                        ->schema([
                         // 1. INPUT RELASI
                         Select::make('user_id')
                             ->relationship('user', 'name', fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('role', 'penyewa'))
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->label('Nama Penyewa'),
+                            ->label('Nama Penyewa')
+                            ->createOptionAction(fn ($action) => $action->modalWidth('md'))
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->required()
+                                    ->label('Nama Lengkap')
+                                    ->maxLength(255),
+                                Select::make('identity_type')
+                                    ->options([
+                                        'NIM' => 'NIM',
+                                        'NIP' => 'NIP',
+                                        'NIK' => 'NIK',
+                                    ])
+                                    ->required()
+                                    ->native(false)
+                                    ->selectablePlaceholder(false)
+                                    ->label('Tipe Identitas'),
+                                TextInput::make('identity_number')
+                                    ->required()
+                                    ->unique('users', 'identity_number')
+                                    ->label('Nomor Identitas (NIM/NIP/NIK)')
+                                    ->maxLength(255),
+                                TextInput::make('email')
+                                    ->email()
+                                    ->unique('users', 'email')
+                                    ->requiredWithout('phone_number')
+                                    ->label('Alamat Email (Opsional jika ada Telp)')
+                                    ->maxLength(255),
+                                TextInput::make('phone_number')
+                                    ->tel()
+                                    ->requiredWithout('email')
+                                    ->label('Nomor Telepon/WA (Opsional jika ada Email)')
+                                    ->maxLength(15),
+                                Select::make('gender')
+                                    ->options([
+                                        'P' => 'Perempuan',
+                                        'L' => 'Laki-laki',
+                                    ])
+                                    ->default('P')
+                                    ->required()
+                                    ->native(false)
+                                    ->selectablePlaceholder(false)
+                                    ->label('Jenis Kelamin'),
+                            ])
+                            ->createOptionUsing(function (array $data) {
+                                // Default password & role
+                                $data['password'] = bcrypt('12345678'); 
+                                $data['role'] = 'penyewa';
+                                if (empty($data['email'])) {
+                                    $data['email'] = ($data['phone_number'] ?? uniqid()) . '@no-email.com';
+                                }
+                                return \App\Models\User::create($data)->id;
+                            }),
 
                         Select::make('room_type_id')
                             ->relationship('roomType', 'name')
                             ->required()
+                            ->native(false)
+                            ->searchable()
+                            ->preload()
                             ->live(debounce: 500)
                             ->afterStateUpdated(function ($set, $get) {
                                 $set('room_id', null);
@@ -68,15 +124,24 @@ class ReservationForm
                         // 2. INPUT KONTRAK WAKTU
                         DatePicker::make('check_in_date')
                             ->required()
+                            ->minDate(today())
                             ->live(debounce: 500)
-                            ->afterStateUpdated(function ($set, $get) {
+                            ->afterStateUpdated(function ($set, $get, $state) {
                                 $set('room_id', null);
+                                if ($state) {
+                                    $checkIn = \Carbon\Carbon::parse($state);
+                                    $checkOut = $get('check_out_date') ? \Carbon\Carbon::parse($get('check_out_date')) : null;
+                                    if (!$checkOut || $checkOut->lte($checkIn)) {
+                                        $set('check_out_date', $checkIn->copy()->addDay()->toDateString());
+                                    }
+                                }
                                 self::calculateTotalPrice($set, $get);
                             })
                             ->label('Rencana Check-In'),
 
                         DatePicker::make('check_out_date')
                             ->required()
+                            ->minDate(fn ($get) => $get('check_in_date') ? \Carbon\Carbon::parse($get('check_in_date'))->addDay() : today()->addDay())
                             ->live(debounce: 500)
                             ->afterStateUpdated(function ($set, $get) {
                                 $set('room_id', null);
@@ -87,28 +152,50 @@ class ReservationForm
                         // 3. NOMOR KAMAR (Dipindah ke bawah tanggal)
                         Select::make('room_id')
                             ->nullable()
+                            ->native(false)
+                            ->searchable()
+                            ->preload()
                             ->placeholder(fn ($get) => (!$get('check_in_date') || !$get('check_out_date') || !$get('room_type_id')) ? 'Pilih Tipe & Tanggal Dulu' : 'Pilih Kamar Tersedia')
                             ->label('Nomor Kamar')
                             ->relationship(
                                 name: 'room',
                                 titleAttribute: 'room_number',
-                                modifyQueryUsing: function ($query, $get) {
+                                modifyQueryUsing: function (\Illuminate\Database\Eloquent\Builder $query, callable $get, ?\App\Models\Reservation $record) {
                                     $typeId = $get('room_type_id');
                                     $checkIn = $get('check_in_date');
                                     $checkOut = $get('check_out_date');
+                                    
+                                    // Jika form belum diisi lengkap, query kosongkan saja (kecuali saat edit, pastikan kamar saat ini tetap ter-load)
                                     if (!$typeId || !$checkIn || !$checkOut) {
+                                        if ($record && $record->room_id) {
+                                            return $query->where('id', $record->room_id);
+                                        }
                                         return $query->whereRaw('1 = 0'); 
                                     }
+                                    
                                     $query->where('room_type_id', $typeId)
                                           ->where('status', '!=', 'maintenance');
-                                    $query->whereNotIn('id', function ($subQuery) use ($checkIn, $checkOut) {
+                                          
+                                    $query->whereNotIn('id', function ($subQuery) use ($checkIn, $checkOut, $record) {
                                         $subQuery->select('room_id')
                                             ->from('reservations')
                                             ->whereNotNull('room_id')
                                             ->whereIn('status', ['pending', 'confirmed', 'active'])
                                             ->where('check_in_date', '<', $checkOut)
                                             ->where('check_out_date', '>', $checkIn);
+                                            
+                                        // PENTING: Kecualikan reservasi yang SEDANG DIEDIT ini dari pengecekan bentrok
+                                        if ($record) {
+                                            $subQuery->where('id', '!=', $record->id);
+                                        }
                                     });
+                                    
+                                    // PENTING: Pastikan kamar yang saat ini sudah terpilih (saved in DB) SELALU disertakan dalam opsi
+                                    // meskipun mungkin status kamar itu sedang ada kondisi lain, agar label '101' bisa di-render oleh Filament
+                                    if ($record && $record->room_id) {
+                                        $query->orWhere('id', $record->room_id);
+                                    }
+                                    
                                     return $query;
                                 }
                             ),
@@ -133,40 +220,60 @@ class ReservationForm
                             ->readOnly() // Dibuat read-only karena dihitung otomatis
                             ->label('Total Harga Kontrak'),
 
-                        // 5. INPUT SIKLUS HIDUP OPERASIONAL
-                        Select::make('status')
-                            ->required()
-                            ->options([
-                                'pending' => 'Pending (Menunggu Pembayaran)',
-                                'confirmed' => 'Confirmed (Sudah Bayar)',
-                                'active' => 'Active (Sedang Dihuni)',
-                                'completed' => 'Completed (Selesai)',
-                                'cancelled' => 'Cancelled (Dibatalkan)',
-                            ])
-                            ->default('pending')
-                            ->label('Status Reservasi')
-                            ->hidden(fn ($record) => $record === null)
-                            ->disabled()
-                            ->dehydrated(),
-
-                        Select::make('payment_method')
-                            ->options([
-                                'transfer' => 'Transfer Bank',
-                                'cash' => 'Tunai (Cash)',
-                            ])
-                            ->required()
-                            ->default('transfer')
-                            ->label('Metode Pembayaran')
-                            ->disabled(fn ($record) => $record !== null)
-                            ->dehydrated() // Pastikan nilainya tetap dikirim meski disabled
-                            ->columnSpanFull(),
-
-                        Textarea::make('notes')
-                            ->nullable()
-                            ->columnSpanFull()
-                            ->label('Catatan Lapangan (Opsional)'),
                     ])->columns(2),
                     
+
+                ])->columnSpan(['lg' => 2]),
+
+                \Filament\Schemas\Components\Group::make()->schema([
+                    \Filament\Schemas\Components\Section::make('Siklus Operasional')
+                        ->schema([
+                            Select::make('status')
+                                ->required()
+                                ->options([
+                                    'pending' => 'Pending',
+                                    'confirmed' => 'Confirmed',
+                                    'active' => 'Active',
+                                    'completed' => 'Completed',
+                                    'refunding' => 'Refunding',
+                                    'cancelled' => 'Cancelled',
+                                ])
+                                ->default('pending')
+                                ->label('Status Reservasi')
+                                ->hidden(fn (string $operation) => $operation === 'create')
+                                ->disabled()
+                                ->dehydrated(),
+
+                            Select::make('payment_method')
+                                ->options([
+                                    'transfer' => 'Transfer Bank',
+                                    'cash' => 'Tunai',
+                                ])
+                                ->required()
+                                ->native(false)
+                                ->searchable()
+                                ->default('transfer')
+                                ->label('Metode Pembayaran')
+                                ->disabled(fn (string $operation) => $operation === 'edit')
+                                ->dehydrated(),
+
+                            Textarea::make('notes')
+                                ->nullable()
+                                ->label('Catatan Lapangan'),
+                        ]),
+                    
+                    \Filament\Schemas\Components\Section::make('Informasi Data')
+                        ->schema([
+                            \Filament\Forms\Components\Placeholder::make('created_at')
+                                ->label('Dibuat pada')
+                                ->content(fn ($record) => $record ? $record->created_at->diffForHumans() : '-'),
+                                
+                            \Filament\Forms\Components\Placeholder::make('updated_at')
+                                ->label('Terakhir diubah')
+                                ->content(fn ($record) => $record ? $record->updated_at->diffForHumans() : '-'),
+                        ])->hidden(fn (string $operation) => $operation === 'create'),
+                ])->columnSpan(['lg' => 1]),
+
                 // 6. DETAIL PEMBAYARAN (Bisa Diedit Langsung di Sini)
                 \Filament\Forms\Components\Repeater::make('payments')
                     ->relationship('payments')
@@ -180,23 +287,31 @@ class ReservationForm
 
                         \Filament\Forms\Components\Select::make('status')
                             ->options([
-                                'pending' => 'Pending (Menunggu Pembayaran)',
-                                'paid' => 'Paid (Menunggu Verifikasi)',
-                                'verified' => 'Verified (Sah/Lunas)',
-                                'rejected' => 'Rejected (Ditolak/Palsu)',
-                                'refunded' => 'Refunded (Dikembalikan)',
+                                'pending' => 'Pending',
+                                'paid' => 'Paid',
+                                'verified' => 'Verified',
+                                'rejected' => 'Rejected',
+                                'refunded' => 'Refunded',
                             ])
                             ->label('Status Validasi Pembayaran')
                             ->disabled()
                             ->dehydrated()
                             ->required(),
 
+                        \Filament\Forms\Components\TextInput::make('bank_name')
+                            ->label('Nama Bank')
+                            ->nullable(),
+
+                        \Filament\Forms\Components\TextInput::make('bank_account')
+                            ->label('Nomor Rekening')
+                            ->nullable(),
+
                         \Filament\Forms\Components\FileUpload::make('payment_proof')
                             ->label('Upload Bukti Transfer')
                             ->image()
                             ->directory('bukti-transfer')
                             ->columnSpanFull(),
-                            
+
                         \Filament\Schemas\Components\Actions::make([
                             \Filament\Actions\Action::make('verify')
                                 ->label('Terima')
@@ -208,12 +323,7 @@ class ReservationForm
                                     $set('../../status', 'confirmed');
                                 })
                                 ->disabled(function (callable $get) {
-                                    $status = $get('status');
-                                    $method = $get('../../payment_method');
-                                    if ($method === 'transfer') {
-                                        return $status !== 'paid';
-                                    }
-                                    return !in_array($status, ['pending', 'paid']);
+                                    return !in_array($get('status'), ['pending', 'paid']);
                                 }),
                             \Filament\Actions\Action::make('reject')
                                 ->label('Tolak')
@@ -224,29 +334,13 @@ class ReservationForm
                                     $set('../../status', 'cancelled');
                                 })
                                 ->disabled(function (callable $get) {
-                                    $status = $get('status');
-                                    $method = $get('../../payment_method');
-                                    if ($method === 'transfer') {
-                                        return $status !== 'paid';
-                                    }
-                                    return !in_array($status, ['pending', 'paid']);
-                                }),
-                            \Filament\Actions\Action::make('refund')
-                                ->label('Kembalikan Dana')
-                                ->color('warning')
-                                ->requiresConfirmation()
-                                ->action(function (callable $set) {
-                                    $set('status', 'refunded');
-                                    $set('../../status', 'cancelled');
-                                })
-                                ->disabled(function (callable $get) {
-                                    return $get('status') !== 'verified';
+                                    return !in_array($get('status'), ['pending', 'paid']);
                                 }),
                         ])->columnSpanFull(),
                     ])
-                    ->columns(3) // Agar Tanggal, Metode, dan Status sejajar dalam 1 baris
+                    ->columns(2) // Agar 2 baris 2 kolom (Tanggal & Status di baris 1, Bank & Rekening di baris 2)
                     ->columnSpanFull()
-                    ->visible(fn ($record) => $record !== null), // Hanya muncul di halaman Edit, bukan Create
-            ]);
+                    ->hidden(fn (string $operation) => $operation === 'create'), // Pastikan murni tersembunyi di halaman Create
+            ])->columns(3);
     }
 }

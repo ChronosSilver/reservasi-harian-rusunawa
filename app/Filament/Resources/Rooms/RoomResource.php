@@ -24,8 +24,9 @@ class RoomResource extends Resource
 
     protected static ?string $modelLabel = 'Kamar';
     protected static ?string $pluralModelLabel = 'Kamar';
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingOffice2;
     protected static ?string $navigationLabel = 'Kamar';
+    protected static string|\UnitEnum|null $navigationGroup = 'Fasilitas Rusun';
     protected static ?int $navigationSort = 3;
     protected static ?string $recordTitleAttribute = 'room_number';
 
@@ -34,9 +35,10 @@ class RoomResource extends Resource
         return RoomForm::configure($schema);
     }
 
-public static function table(Table $table): Table
+    public static function table(Table $table): Table
     {
         return $table
+            ->poll('10s')
             ->columns([
                 Tables\Columns\TextColumn::make('room_number')
                     ->label('Nomor Kamar')
@@ -68,7 +70,41 @@ public static function table(Table $table): Table
             ->filters([
             ])
             ->actions([
-                EditAction::make(), 
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('set_available')
+                        ->label('Tersedia')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->disabled(fn (Room $record) => $record->status !== 'maintenance')
+                        ->action(function (Room $record) {
+                            $record->update(['status' => 'available']);
+                        }),
+                        
+                    \Filament\Actions\Action::make('set_maintenance')
+                        ->label('Sedang Diperbaiki')
+                        ->icon('heroicon-o-wrench-screwdriver')
+                        ->color('warning')
+                        ->disabled(fn (Room $record) => $record->status === 'maintenance')
+                        ->action(function (Room $record) {
+                            $activeReservationsCount = $record->reservations()
+                                ->whereIn('status', ['pending', 'confirmed', 'active'])
+                                ->count();
+                            
+                            if ($activeReservationsCount > 0) {
+                                \Filament\Notifications\Notification::make()
+                                    ->warning()
+                                    ->title('Kamar Terikat Reservasi!')
+                                    ->body("Terdapat {$activeReservationsCount} reservasi terkait dengan kamar ini. Harap ubah nomor kamar untuk reservasi belum check-in, atau pindahkan penyewa yang sudah check-in.")
+                                    ->send();
+                                return;
+                            }
+                            
+                            $record->update(['status' => 'maintenance']);
+                        }),
+
+                    EditAction::make()
+                        ->label('Ubah'),
+                ]),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -80,7 +116,7 @@ public static function table(Table $table): Table
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Rooms\RelationManagers\ReservationsRelationManager::class,
         ];
     }
 
@@ -90,6 +126,13 @@ public static function table(Table $table): Table
             'index' => ListRooms::route('/'),
             'create' => CreateRoom::route('/create'),
             'edit' => EditRoom::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Rooms\Widgets\RoomResourceStats::class,
         ];
     }
 }

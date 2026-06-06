@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Reservation extends Model
 {
@@ -13,6 +14,13 @@ class Reservation extends Model
 
     protected static function booted()
     {
+        // Generate kode tiket otomatis saat reservasi baru dibuat
+        static::creating(function (Reservation $reservation) {
+            $date = now()->format('ymd');
+            $random = strtoupper(Str::random(4));
+            $reservation->ticket_code = 'TICK-' . $date . '-' . $random;
+        });
+
         // Otomatisasi: Setiap kali Reservasi baru dibuat (baik oleh Admin maupun User nanti),
         // sistem akan otomatis men-generate data Pembayaran berstatus 'pending'.
         static::created(function (Reservation $reservation) {
@@ -26,6 +34,7 @@ class Reservation extends Model
 
     // Kolom yang diizinkan untuk diisi secara massal
     protected $fillable = [
+        'ticket_code',
         'user_id',
         'room_type_id',
         'room_id',

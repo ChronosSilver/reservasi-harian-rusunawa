@@ -10,6 +10,13 @@ class ListRooms extends ListRecords
 {
     protected static string $resource = RoomResource::class;
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Rooms\Widgets\RoomResourceStats::class,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

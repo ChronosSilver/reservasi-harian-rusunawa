@@ -10,6 +10,11 @@ class EditRoomType extends EditRecord
 {
     protected static string $resource = RoomTypeResource::class;
 
+    public function getHeading(): string
+    {
+        return 'Detail & Edit Tipe Kamar';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
