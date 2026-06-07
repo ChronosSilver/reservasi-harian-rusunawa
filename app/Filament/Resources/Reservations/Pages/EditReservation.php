@@ -57,44 +57,71 @@ class EditReservation extends EditRecord
                     return redirect(request()->header('Referer'));
                 }),
 
-            \Filament\Actions\Action::make('cancel')
+            \Filament\Actions\Action::make('cancel_pending_unpaid')
                 ->label('Batalkan')
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
                 ->modalHeading('Batalkan Reservasi')
                 ->modalDescription('Apakah Anda yakin ingin membatalkan reservasi ini?')
-                ->visible(fn ($record) => in_array($record->status, ['pending', 'confirmed']))
+                ->visible(fn ($record) => $record->status === 'pending' && $record->payments()->latest()->first()?->status !== 'paid')
                 ->form([
                     \Filament\Forms\Components\Textarea::make('cancellation_reason')
                         ->label('Alasan Pembatalan')
                         ->placeholder('Masukkan alasan pembatalan...')
                         ->required(),
                 ])
-                ->action(function (array $data, $record) {
-                    if ($record->status === 'pending') {
-                        $record->update(['status' => 'cancelled']);
-                        $record->payments()->update([
-                            'status' => 'rejected',
-                            'cancellation_reason' => $data['cancellation_reason']
-                        ]);
-                        \Filament\Notifications\Notification::make()
-                            ->success()
-                            ->title('Dibatalkan')
-                            ->body('Reservasi Pending berhasil dibatalkan.')
-                            ->send();
-                    } elseif ($record->status === 'confirmed') {
-                        $record->update(['status' => 'refunding']);
-                        $record->payments()->update(['cancellation_reason' => $data['cancellation_reason']]);
-                        if ($record->room) {
-                            $record->room->update(['status' => 'available']);
-                        }
-                        \Filament\Notifications\Notification::make()
-                            ->warning()
-                            ->title('Masuk Antrean Refund')
-                            ->body('Reservasi Confirmed dibatalkan. Menunggu proses Refund.')
-                            ->send();
-                        return redirect(request()->header('Referer'));
+                ->action(function (array $data, $record, \Filament\Actions\Action $action) {
+                    $record->update(['status' => 'cancelled']);
+                    $record->payments()->update([
+                        'status' => 'rejected',
+                        'cancellation_reason' => $data['cancellation_reason']
+                    ]);
+                    \Filament\Notifications\Notification::make()
+                        ->success()
+                        ->title('Dibatalkan')
+                        ->body('Reservasi Pending berhasil dibatalkan.')
+                        ->send();
+                    $action->getLivewire()->js('window.location.reload()');
+                }),
+
+            \Filament\Actions\Action::make('cancel_pending_paid')
+                ->label('Batalkan')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->visible(fn ($record) => $record->status === 'pending' && $record->payments()->latest()->first()?->status === 'paid')
+                ->action(function () {
+                    \Filament\Notifications\Notification::make()
+                        ->warning()
+                        ->title('Aksi Ditolak')
+                        ->body('Peringatan: Anda belum memverifikasi bukti pembayaran! Silakan verifikasi terlebih dahulu.')
+                        ->send();
+                }),
+
+            \Filament\Actions\Action::make('cancel_confirmed')
+                ->label('Batalkan')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->modalHeading('Batalkan Reservasi Terverifikasi')
+                ->modalDescription('Apakah Anda yakin ingin membatalkan reservasi ini?')
+                ->visible(fn ($record) => $record->status === 'confirmed')
+                ->form([
+                    \Filament\Forms\Components\Textarea::make('cancellation_reason')
+                        ->label('Alasan Pembatalan')
+                        ->placeholder('Masukkan alasan pembatalan...')
+                        ->required(),
+                ])
+                ->action(function (array $data, $record, \Filament\Actions\Action $action) {
+                    $record->update(['status' => 'refunding']);
+                    $record->payments()->update(['cancellation_reason' => $data['cancellation_reason']]);
+                    if ($record->room) {
+                        $record->room->update(['status' => 'available']);
                     }
+                    \Filament\Notifications\Notification::make()
+                        ->warning()
+                        ->title('Masuk Antrean Refund')
+                        ->body('Reservasi Confirmed dibatalkan. Menunggu proses Refund.')
+                        ->send();
+                    $action->getLivewire()->js('window.location.reload()');
                 }),
 
             \Filament\Actions\Action::make('refund')

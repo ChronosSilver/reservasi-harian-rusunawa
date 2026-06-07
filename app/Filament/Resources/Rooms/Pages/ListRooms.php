@@ -23,4 +23,26 @@ class ListRooms extends ListRecords
             CreateAction::make(),
         ];
     }
+
+    public function getTabs(): array
+    {
+        return [
+            'Semua' => \Filament\Schemas\Components\Tabs\Tab::make(),
+            
+            'Available' => \Filament\Schemas\Components\Tabs\Tab::make()
+                ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('status', 'available'))
+                ->badge(\App\Models\Room::query()->where('status', 'available')->count())
+                ->badgeColor('success'),
+                
+            'Occupied' => \Filament\Schemas\Components\Tabs\Tab::make()
+                ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('status', 'occupied'))
+                ->badge(\App\Models\Room::query()->where('status', 'occupied')->count())
+                ->badgeColor('danger'),
+                
+            'Maintenance' => \Filament\Schemas\Components\Tabs\Tab::make()
+                ->modifyQueryUsing(fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('status', 'maintenance'))
+                ->badge(\App\Models\Room::query()->where('status', 'maintenance')->count())
+                ->badgeColor('warning'),
+        ];
+    }
 }

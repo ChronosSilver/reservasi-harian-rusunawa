@@ -41,6 +41,7 @@ class ReservationResource extends Resource
     {
         return $table
             ->poll('10s')
+            ->defaultPaginationPageOption(25)
             ->columns([
             Tables\Columns\TextColumn::make('ticket_code')
                 ->label('Kode Tiket')

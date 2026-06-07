@@ -42,7 +42,7 @@ class PaymentResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return PaymentsTable::configure($table);
+        return PaymentsTable::configure($table->defaultPaginationPageOption(25));
     }
 
     public static function getRelations(): array

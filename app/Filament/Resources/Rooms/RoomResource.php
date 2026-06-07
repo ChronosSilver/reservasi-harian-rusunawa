@@ -39,6 +39,7 @@ class RoomResource extends Resource
     {
         return $table
             ->poll('10s')
+            ->defaultPaginationPageOption(25)
             ->columns([
                 Tables\Columns\TextColumn::make('room_number')
                     ->label('Nomor Kamar')

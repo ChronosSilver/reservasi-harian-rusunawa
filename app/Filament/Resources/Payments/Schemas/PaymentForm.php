@@ -117,28 +117,27 @@ class PaymentForm
                             })
                             ->hidden(fn (string $operation) => $operation === 'create')
                             ->columnSpanFull(),
-
-                        \Filament\Forms\Components\Textarea::make('cancellation_reason')
-                            ->label('Alasan Pembatalan (Penyewa)')
-                            ->nullable()
-                            ->visible(function ($record) {
-                                if (!$record || !$record->reservation) return false;
-                                return in_array($record->reservation->status, ['refunding', 'cancelled']);
-                            })
-                            ->columnSpanFull(),
-
-                        \Filament\Forms\Components\FileUpload::make('refund_proof')
-                            ->label('Bukti Transfer Refund')
-                            ->directory('bukti-refund')
-                            ->disk('public')
-                            ->image()
-                            ->nullable()
-                            ->visible(function ($record) {
-                                if (!$record || !$record->reservation) return false;
-                                return in_array($record->reservation->status, ['refunding', 'cancelled']);
-                            })
-                            ->columnSpanFull(),
                     ]),
+                    
+                    \Filament\Schemas\Components\Section::make('Informasi Pengembalian')
+                        ->description('Data terkait proses pembatalan dan pengembalian dana.')
+                        ->schema([
+                            \Filament\Forms\Components\Textarea::make('cancellation_reason')
+                                ->label('Alasan Pembatalan')
+                                ->nullable()
+                                ->disabled()
+                                ->columnSpanFull(),
+
+                            \Filament\Forms\Components\FileUpload::make('refund_proof')
+                                ->label('Bukti Transfer Refund')
+                                ->directory('bukti-refund')
+                                ->disk('public')
+                                ->image()
+                                ->nullable()
+                                ->disabled()
+                                ->columnSpanFull(),
+                        ])
+                        ->hidden(fn (string $operation) => $operation === 'create'),
                 ])->columnSpan(['lg' => 2]),
 
                 \Filament\Schemas\Components\Group::make()->schema([
