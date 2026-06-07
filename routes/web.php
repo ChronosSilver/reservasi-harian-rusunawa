@@ -1,7 +1,28 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TenantAuthController;
+use App\Http\Controllers\LandingController;
 
-Route::get('/', function () {
-    return view('welcome');
+use App\Http\Controllers\ReservationController;
+
+// Rute Halaman Utama Publik
+Route::get('/', [LandingController::class, 'index'])->name('home');
+
+// Auth Routes (Penyewa)
+Route::get('/login', [TenantAuthController::class, 'showLogin'])->name('login')->middleware('guest');
+Route::post('/login', [TenantAuthController::class, 'login'])->middleware('guest');
+Route::get('/register', [TenantAuthController::class, 'showRegister'])->name('register')->middleware('guest');
+Route::post('/register', [TenantAuthController::class, 'register'])->middleware('guest');
+Route::post('/logout', [TenantAuthController::class, 'logout'])->name('logout');
+
+// Area Penyewa (Hanya untuk yang sudah login)
+Route::middleware('auth')->group(function () {
+    // Rute Reservasi Aktif & Riwayat
+    Route::get('/reservations', [ReservationController::class, 'index'])->name('reservations.index');
+    Route::get('/reservations/history', [ReservationController::class, 'history'])->name('reservations.history');
+    
+    // Rute Buat Reservasi
+    Route::get('/reservations/create', [ReservationController::class, 'create'])->name('reservations.create');
+    Route::post('/reservations', [ReservationController::class, 'store'])->name('reservations.store');
+    Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('reservations.cancel');
 });
