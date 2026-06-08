@@ -49,7 +49,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <div id="availability_info" class="mt-2" style="font-size: 0.85rem; font-weight: 500; display: none;">
+                            <div id="availability_info" class="mt-2 availability-info d-none">
                                 <!-- Konten counter dari JS -->
                             </div>
                         </div>

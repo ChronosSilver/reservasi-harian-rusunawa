@@ -1,7 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container min-h-80vh profile-container">
+<div class="container profile-container min-h-80vh">
+    
+    <div id="profilePageData" class="d-none"
+        data-require-identity="{{ session('require_identity') ? 'true' : 'false' }}"
+        data-password-error="{{ session('password_modal') || $errors->has('current_password') || $errors->has('new_password') ? 'true' : 'false' }}">
+    </div>
+
     <div class="dashboard-header flex-header profile-header">
         <div>
             <h1>Pengaturan Profil</h1>
@@ -191,28 +197,14 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline" onclick="closePasswordModal()" style="padding: 8px 20px;">Batal</button>
-                <button type="submit" class="btn btn-primary" style="padding: 8px 20px;">Simpan Sandi Baru</button>
+                <button type="button" class="btn btn-outline btn-px-20" onclick="closePasswordModal()">Batal</button>
+                <button type="submit" class="btn btn-primary btn-px-20">Simpan Sandi Baru</button>
             </div>
         </form>
     </div>
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/profile.js') }}"></script>
-<script>
-    @if(session('require_identity'))
-        window.addEventListener('DOMContentLoaded', () => {
-            openIdentityModal();
-        });
-    @endif
-
-    // Buka otomatis jika ada error terkait penggantian password
-    @if(session('password_modal') || $errors->has('current_password') || $errors->has('new_password'))
-        window.addEventListener('DOMContentLoaded', () => {
-            openPasswordModal();
-        });
-    @endif
-</script>
+<script src="{{ asset('js/profile.js') }}?v={{ filemtime(public_path('js/profile.js')) }}"></script>
 @endpush
 @endsection

@@ -462,3 +462,52 @@
 .profile-password-toggle:hover {
     color: var(--primary);
 }
+
+/* ==========================================================================
+   Mobile Responsiveness (Max Width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 20px 10px;
+    }
+
+    .profile-info-bar {
+        flex-direction: column;
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    .profile-meta-row {
+        justify-content: center;
+    }
+
+    .profile-grid-1-1, 
+    .profile-grid-1-2 {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .profile-form-body {
+        padding: 25px 20px;
+    }
+
+    .profile-form-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .profile-password-hint {
+        margin-right: 0;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 0 auto;
+    }
+
+    .modal-body {
+        padding: 15px;
+    }
+}

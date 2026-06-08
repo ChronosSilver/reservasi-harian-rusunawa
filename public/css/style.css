@@ -898,7 +898,7 @@ ul {
     }
     
     .logo-text {
-        font-size: 20px;
+        display: none;
     }
     
     .hero {
@@ -912,5 +912,72 @@ ul {
     .footer-content {
         grid-template-columns: 1fr;
         text-align: center;
+    }
+}
+
+/* ==========================================================================
+   Mobile Menu Specific Styles
+   ========================================================================== */
+.mobile-menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    margin-right: 10px;
+}
+
+.mobile-menu-toggle:hover {
+    background-color: var(--bg-body);
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+        order: 1; /* Pindahkan hamburger menu ke kiri atau tengah */
+    }
+
+    .nav-wrapper {
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .logo {
+        order: 2;
+        margin-right: auto;
+    }
+
+    .nav-actions {
+        order: 3;
+    }
+
+    .nav-links {
+        display: none; /* Default hidden */
+        flex-direction: column;
+        width: 100%;
+        order: 4;
+        margin-top: 15px;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: var(--shadow-md);
+        gap: 5px;
+    }
+
+    .nav-links.active {
+        display: flex; /* Ditampilkan saat tombol hamburger diklik */
+    }
+
+    .nav-links .nav-item {
+        padding: 12px 15px;
+        border-radius: 8px;
+        text-align: center;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .nav-links .nav-item:last-child {
+        border-bottom: none;
     }
 }

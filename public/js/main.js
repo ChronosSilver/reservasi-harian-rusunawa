@@ -40,6 +40,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Script untuk Mobile Menu Toggle (Hamburger)
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+    const navLinksContainer = document.getElementById('navLinks');
+
+    if (mobileMenuToggle && navLinksContainer) {
+        mobileMenuToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            navLinksContainer.classList.toggle('active');
+        });
+
+        // Tutup menu mobile jika klik di luar navbar
+        document.addEventListener('click', function(e) {
+            const isClickInsideNavbar = e.target.closest('.navbar');
+            if (!isClickInsideNavbar && navLinksContainer.classList.contains('active')) {
+                navLinksContainer.classList.remove('active');
+            }
+        });
+
+        // Tutup menu setelah klik salah satu link (khusus link anchor /#)
+        const navItems = navLinksContainer.querySelectorAll('.nav-item');
+        navItems.forEach(function(item) {
+            item.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    navLinksContainer.classList.remove('active');
+                }
+            });
+        });
+    }
+
     // Script untuk Clear Input (Nama, Email)
     const inputWrappers = document.querySelectorAll('.input-wrapper');
     inputWrappers.forEach(function(wrapper) {

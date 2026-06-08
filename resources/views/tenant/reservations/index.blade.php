@@ -33,17 +33,17 @@
         @if(isset($reservations) && $reservations->count() > 0)
             <div class="reservation-list">
                 @foreach($reservations as $reservation)
-                    <div class="reservation-card" onclick="openReservationModal({
-                        ticket: '{{ $reservation->ticket_code }}',
-                        room: '{{ $reservation->roomType->name }}',
-                        checkIn: '{{ \Carbon\Carbon::parse($reservation->check_in_date)->format('d M Y') }}',
-                        checkOut: '{{ \Carbon\Carbon::parse($reservation->check_out_date)->format('d M Y') }}',
-                        duration: '{{ \Carbon\Carbon::parse($reservation->check_in_date)->diffInDays(\Carbon\Carbon::parse($reservation->check_out_date)) }} Hari',
-                        payment: '{{ $reservation->payment_method == 'transfer' ? 'Transfer Bank' : 'Tunai' }}',
-                        total: 'Rp {{ number_format($reservation->total_price, 0, ',', '.') }}',
-                        status: '{{ strtoupper($reservation->status) }}',
-                        statusClass: 'badge-{{ strtolower($reservation->status) }}'
-                    })">
+                    <div class="reservation-card js-reservation-card" data-reservation="{{ json_encode([
+                        'ticket' => $reservation->ticket_code,
+                        'room' => $reservation->roomType->name,
+                        'checkIn' => \Carbon\Carbon::parse($reservation->check_in_date)->format('d M Y'),
+                        'checkOut' => \Carbon\Carbon::parse($reservation->check_out_date)->format('d M Y'),
+                        'duration' => \Carbon\Carbon::parse($reservation->check_in_date)->diffInDays(\Carbon\Carbon::parse($reservation->check_out_date)) . ' Hari',
+                        'payment' => $reservation->payment_method == 'transfer' ? 'Transfer Bank' : 'Tunai',
+                        'total' => 'Rp ' . number_format($reservation->total_price, 0, ',', '.'),
+                        'status' => strtoupper($reservation->status),
+                        'statusClass' => 'badge-' . strtolower($reservation->status)
+                    ]) }}">
                         
                         <div class="flex-1-min-280">
                             <div class="flex-center-gap">
@@ -77,20 +77,20 @@
                             </div>
                         </div>
 
-                        <div class="text-right-min-200" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+                        <div class="text-right-min-200 action-buttons-wrapper">
                             @if($reservation->status == 'pending' && $reservation->payment_method == 'transfer')
-                                <a href="{{ route('reservations.payment', $reservation->id) }}" class="btn btn-primary btn-action-primary" onclick="event.stopPropagation();">
+                                <a href="{{ route('reservations.payment', $reservation->id) }}" class="btn btn-primary btn-action-primary js-stop-prop">
                                     Lanjutkan ke Pembayaran
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-ml-5-vert"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                                 </a>
                             @endif
 
-                            <div class="dropdown-container" style="position: relative;">
-                                <button type="button" class="btn btn-outline" style="padding: 8px; border-radius: 50%; border: 1px solid #cbd5e1; background: white; color: #475569;" onclick="event.stopPropagation(); toggleActionDropdown('dropdown-{{ $reservation->id }}')">
+                            <div class="dropdown-container">
+                                <button type="button" class="btn btn-outline dropdown-trigger-btn js-dropdown-trigger" data-target="dropdown-{{ $reservation->id }}">
                                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
                                 </button>
                                 
-                                <div id="dropdown-{{ $reservation->id }}" class="dropdown-menu" style="right: 0; top: 100%; width: 220px; z-index: 100;">
+                                <div id="dropdown-{{ $reservation->id }}" class="dropdown-menu dropdown-menu-right">
                                     @php
                                         $payment = $reservation->payments->first();
                                         $paymentData = $payment ? [
@@ -102,12 +102,12 @@
                                             'proof' => $payment->payment_proof ? asset('storage/' . $payment->payment_proof) : null
                                         ] : null;
                                     @endphp
-                                    <button type="button" class="dropdown-item" style="width: 100%; text-align: left; padding: 10px 15px; border: none; background: none; cursor: pointer;" onclick="event.stopPropagation(); toggleActionDropdown('dropdown-{{ $reservation->id }}'); openPaymentDetailModal({{ json_encode($paymentData) }})">
+                                    <button type="button" class="dropdown-item dropdown-item-action js-payment-detail-trigger" data-target="dropdown-{{ $reservation->id }}" data-payment="{{ json_encode($paymentData) }}">
                                         Detail Pembayaran
                                     </button>
 
                                     @if(in_array($reservation->status, ['pending', 'confirmed']))
-                                    <button type="button" class="dropdown-item" style="width: 100%; text-align: left; padding: 10px 15px; border: none; background: none; cursor: pointer; color: #e11d48;" onclick="event.stopPropagation(); toggleActionDropdown('dropdown-{{ $reservation->id }}'); openCancelModal('{{ $reservation->id }}', '{{ $reservation->ticket_code }}');">
+                                    <button type="button" class="dropdown-item dropdown-item-action text-danger js-cancel-trigger" data-target="dropdown-{{ $reservation->id }}" data-id="{{ $reservation->id }}" data-ticket="{{ $reservation->ticket_code }}">
                                         Batalkan Reservasi
                                     </button>
                                     @endif
@@ -192,29 +192,29 @@
     <div class="modal-content" onclick="event.stopPropagation()">
         <form id="cancelForm" action="" method="POST">
             @csrf
-            <div class="modal-header" style="border-bottom-color: #fecdd3; background-color: #fff1f2; border-radius: var(--radius-lg) var(--radius-lg) 0 0;">
-                <h3 class="modal-title" style="color: #be123c; font-weight: 600;">Pembatalan Reservasi</h3>
-                <button type="button" class="modal-close" onclick="closeCancelModal()">
+            <div class="modal-header modal-header-danger">
+                <h3 class="modal-title modal-title-danger">Pembatalan Reservasi</h3>
+                <button type="button" class="modal-close js-close-cancel-modal">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="cancel-warning-box">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                     <div>
                         <strong>Peringatan!</strong>
-                        <p class="mb-0" style="margin-top:4px;">Anda akan membatalkan tiket <strong id="cancel-ticket-code"></strong>. Tindakan ini tidak dapat dibatalkan.</p>
+                        <p class="mb-0 mt-1">Anda akan membatalkan tiket <strong id="cancel-ticket-code"></strong>. Tindakan ini tidak dapat dibatalkan.</p>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 5px;">
-                    <label for="cancellation_reason" class="modal-detail-label" style="color: #334155; font-weight: 500;">Alasan Pembatalan <span style="color:#e11d48;">*</span></label>
+                <div class="mb-5px">
+                    <label for="cancellation_reason" class="modal-detail-label label-slate-medium">Alasan Pembatalan <span class="text-danger">*</span></label>
                     <textarea name="cancellation_reason" id="cancellation_reason" class="cancel-textarea" placeholder="Contoh: Salah pilih tanggal, Berhalangan hadir, dsb." required></textarea>
                 </div>
             </div>
-            <div class="modal-header" style="background-color: #f8fafc; border-top: 1px solid var(--border-color); border-bottom: none; border-radius: 0 0 var(--radius-lg) var(--radius-lg); padding: 15px 25px; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="btn btn-outline btn-cancel" onclick="closeCancelModal()">Tutup</button>
-                <button type="submit" class="btn btn-primary" style="background-color: #e11d48; border-color: #e11d48; border-radius: 30px; padding: 10px 20px;">Ya, Batalkan Reservasi</button>
+            <div class="modal-footer modal-footer-custom">
+                <button type="button" class="btn btn-outline btn-cancel js-close-cancel-modal">Tutup</button>
+                <button type="submit" class="btn btn-primary btn-danger-rounded">Ya, Batalkan Reservasi</button>
             </div>
         </form>
     </div>
@@ -225,125 +225,6 @@
 @endpush
 
 @push('scripts')
-<script>
-    function toggleActionDropdown(id) {
-        document.querySelectorAll('.dropdown-menu').forEach(el => {
-            if (el.id !== id && el.id !== 'dropdownMenu') {
-                el.classList.remove('show');
-            }
-        });
-        const el = document.getElementById(id);
-        if (el) el.classList.toggle('show');
-    }
-
-    document.addEventListener('click', function(e) {
-        document.querySelectorAll('.dropdown-menu').forEach(el => {
-            if (el.id !== 'dropdownMenu') {
-                el.classList.remove('show');
-            }
-        });
-    });
-
-    function openPaymentDetailModal(data) {
-        const body = document.getElementById('payment-detail-body');
-        if (!data) {
-            body.innerHTML = '<div class="alert alert-warning">Belum ada data pembayaran untuk reservasi ini.</div>';
-        } else {
-            let statusBadge = '';
-            if (data.status === 'PAID' || data.status === 'VERIFIED') statusBadge = 'badge-confirmed';
-            else if (data.status === 'PENDING') statusBadge = 'badge-pending';
-            else if (data.status === 'REJECTED') statusBadge = 'badge-rejected';
-            else statusBadge = 'badge-completed';
-
-            body.innerHTML = `
-                <div class="modal-status-row">
-                    <span class="modal-detail-label">Status Pembayaran</span>
-                    <span class="badge ${statusBadge}">${data.status}</span>
-                </div>
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">Tanggal Terakhir</span>
-                    <span class="modal-detail-value">${data.date}</span>
-                </div>
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">Metode Pembayaran</span>
-                    <span class="modal-detail-value">${data.method}</span>
-                </div>
-                ${data.method === 'Transfer Bank' ? `
-                <div class="modal-detail-row">
-                    <span class="modal-detail-label">Rekening Tujuan</span>
-                    <span class="modal-detail-value">${data.bank}</span>
-                </div>` : ''}
-                
-                ${data.proof ? `
-                <div style="margin-top: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color); text-align: center;">
-                    <p class="modal-detail-label" style="text-align: left; margin-bottom: 10px;">Foto Bukti Transfer</p>
-                    <a href="${data.proof}" target="_blank" style="display: block; overflow: hidden; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                        <img src="${data.proof}" alt="Bukti Transfer" style="width: 100%; max-height: 250px; object-fit: cover; transition: transform 0.3s ease;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                    </a>
-                    <p style="font-size: 0.8rem; color: #94a3b8; margin-top: 8px; margin-bottom: 0;">Klik gambar untuk melihat ukuran penuh</p>
-                </div>` : ''}
-
-                <div class="modal-total-row">
-                    <span class="modal-total-label">Total Dibayar</span>
-                    <span class="modal-total-value">${data.amount}</span>
-                </div>
-            `;
-        }
-        document.getElementById('paymentDetailModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closePaymentDetailModal() {
-        document.getElementById('paymentDetailModal').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-
-    function openReservationModal(data) {
-        document.getElementById('modal-ticket').innerText = data.ticket;
-        document.getElementById('modal-room').innerText = data.room;
-        document.getElementById('modal-checkin').innerText = data.checkIn;
-        document.getElementById('modal-checkout').innerText = data.checkOut;
-        document.getElementById('modal-duration').innerText = data.duration;
-        document.getElementById('modal-payment').innerText = data.payment;
-        document.getElementById('modal-total').innerText = data.total;
-        
-        const statusEl = document.getElementById('modal-status');
-        statusEl.innerText = data.status;
-        statusEl.className = 'badge ' + data.statusClass;
-        
-        document.getElementById('reservationModal').classList.add('active');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
-    }
-
-    function closeReservationModal() {
-        document.getElementById('reservationModal').classList.remove('active');
-        document.body.style.overflow = '';
-    }
-    
-    function openCancelModal(id, ticket) {
-        document.getElementById('cancel-ticket-code').innerText = ticket;
-        // Construct the URL dynamically for the form action
-        const form = document.getElementById('cancelForm');
-        form.action = `/reservations/${id}/cancel`;
-        
-        document.getElementById('cancelModal').classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeCancelModal() {
-        document.getElementById('cancelModal').classList.remove('active');
-        document.body.style.overflow = '';
-        document.getElementById('cancelForm').reset();
-    }
-    
-    // Close on Escape key
-    document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape') {
-            closeReservationModal();
-            closeCancelModal();
-            closePaymentDetailModal();
-        }
-    });
-</script>
+    <script src="{{ asset('js/reservations.js') }}?v={{ filemtime(public_path('js/reservations.js')) }}"></script>
 @endpush
 @endsection

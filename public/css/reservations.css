@@ -255,6 +255,7 @@
 }
 .modal-overlay.active .modal-content {
     transform: translateY(0) scale(1);
+    opacity: 1;
 }
 .modal-header {
     display: flex;
@@ -504,4 +505,287 @@
 }
 .dropdown-item:hover {
     background-color: #f1f5f9;
+}
+
+/* Payment Page Styles */
+.bank-cards-container {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+.bank-cards-container::-webkit-scrollbar {
+    height: 6px;
+}
+.bank-cards-container::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+.bank-card {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 15px;
+    background: #f8fafc;
+    min-width: 250px;
+    flex: 0 0 auto;
+}
+.bank-name { font-weight: 700; color: var(--primary-color); font-size: 1.1rem; }
+.bank-account { font-size: 1.25rem; letter-spacing: 1px; font-weight: 600; margin: 5px 0; color: #334155; }
+.bank-owner { color: #64748b; font-size: 0.9rem; }
+
+.file-upload-wrapper {
+    border: 2px dashed #cbd5e1;
+    padding: 30px;
+    text-align: center;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    background: #f8fafc;
+    transition: all 0.2s ease;
+}
+.file-upload-wrapper:hover {
+    border-color: var(--primary-color);
+    background: #f0fdfa;
+}
+
+/* History Page Styles */
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.clickable-row:hover {
+    background-color: #f8fafc;
+}
+.proof-box {
+    display: block; 
+    overflow: hidden; 
+    border-radius: 8px; 
+    border: 1px solid #e2e8f0; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    margin-top: 10px;
+}
+.proof-img {
+    width: 100%; 
+    max-height: 200px; 
+    object-fit: cover; 
+    transition: transform 0.3s ease;
+}
+.proof-img:hover {
+    transform: scale(1.05);
+}
+
+/* ==========================================================================
+   Mobile Responsiveness (Max Width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .dashboard-panel {
+        padding: 20px 15px;
+    }
+
+    .reservation-card {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 20px 15px;
+        gap: 15px;
+        position: relative; /* Ditambahkan untuk relative parent */
+    }
+
+    .reservation-card .dropdown-container {
+        position: absolute !important;
+        top: 20px;
+        right: 15px;
+    }
+
+    .reservation-card-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .flex-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .flex-header h2 {
+        margin-bottom: 15px;
+    }
+
+    .flex-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .flex-actions button, 
+    .flex-actions a {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .history-table-wrapper {
+        overflow-x: auto;
+        display: block;
+        width: 100%;
+    }
+
+    .form-header {
+        padding: 15px 20px;
+    }
+
+    .form-body {
+        padding: 20px 15px;
+    }
+
+    .summary-box {
+        padding: 15px;
+    }
+
+    .bank-cards-container {
+        flex-wrap: wrap;
+    }
+
+    .bank-card {
+        min-width: 100%;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10px auto;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header, .modal-footer {
+        padding: 15px 20px;
+    }
+
+    .modal-body {
+        padding: 20px 15px;
+    }
+}
+
+/* ==========================================================================
+   Extracted Classes from Inline Styles
+   ========================================================================== */
+
+/* Reservasi Index */
+.action-buttons-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: flex-end;
+}
+.dropdown-trigger-btn {
+    padding: 8px;
+    border-radius: 50%;
+    border: 1px solid #cbd5e1;
+    background: white;
+    color: #475569;
+}
+.dropdown-menu-right {
+    right: 0;
+    top: 100%;
+    width: 220px;
+    z-index: 100;
+}
+.dropdown-item-action {
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+.modal-header-danger {
+    border-bottom-color: #fecdd3;
+    background-color: #fff1f2;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-title-danger {
+    color: #be123c;
+    font-weight: 600;
+}
+.icon-shrink-0 {
+    flex-shrink: 0;
+}
+.mb-5px {
+    margin-bottom: 5px;
+}
+.label-slate-medium {
+    color: #334155;
+    font-weight: 500;
+}
+.modal-footer-custom {
+    background-color: #f8fafc;
+    border-top: 1px solid var(--border-color);
+    border-bottom: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: 15px 25px;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn-danger-rounded {
+    background-color: #e11d48;
+    border-color: #e11d48;
+    border-radius: 30px;
+    padding: 10px 20px;
+}
+
+/* History */
+.modal-wide {
+    max-width: 600px;
+}
+.modal-scrollable-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+.modal-section-title {
+    font-size: 1rem;
+    color: #334155;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e2e8f0;
+}
+.mb-20px {
+    margin-bottom: 20px;
+}
+
+/* Payment */
+.summary-total-spaced {
+    margin-top: 10px;
+    padding-top: 10px;
+}
+.payment-bank-label {
+    margin-top: 40px;
+    margin-bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #f1f5f9;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+.payment-bank-label-text {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.form-grid-1col {
+    grid-template-columns: 1fr;
+}
+.custom-file-input {
+    padding: 10px;
+}
+.flex-actions-mt30 {
+    margin-top: 30px;
+}
+
+/* General Utilities */
+.d-none {
+    display: none !important;
+}
+.btn-px-20 {
+    padding: 8px 20px;
 }

@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === this) closePasswordModal();
         });
     }
+
+    // Auto open modals based on hidden data attributes (Refactored from inline blade scripts)
+    const pageData = document.getElementById('profilePageData');
+    if (pageData) {
+        if (pageData.getAttribute('data-require-identity') === 'true') {
+            openIdentityModal();
+        }
+        if (pageData.getAttribute('data-password-error') === 'true') {
+            openPasswordModal();
+        }
+    }
 });
 
 function openIdentityModal() {

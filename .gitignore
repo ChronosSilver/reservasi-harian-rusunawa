@@ -26,3 +26,16 @@ Homestead.yaml
 Thumbs.db
 
 /AI_INSTRUCTIONS.md
+
+# Diagram Files
+class_diagram.*
+plantuml.jar
+payload.json
+
+# Testing Draft
+testing.docx
+create_testing_docx.py
+laporan_extracted.txt
+
+# Dokumen Laporan
+Laporan Kerja Praktek*.docx
