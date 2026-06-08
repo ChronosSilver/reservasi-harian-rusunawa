@@ -77,14 +77,17 @@ class PaymentForm
                         \Filament\Forms\Components\Hidden::make('payment_date')
                             ->default(now()),
 
-                        \Filament\Forms\Components\TextInput::make('bank_account')
-                            ->label('Nomor Rekening')
-                            ->nullable()
+                        \Filament\Forms\Components\TextInput::make('payment_code')
+                            ->label('Kode Pembayaran')
+                            ->disabled()
+                            ->dehydrated(false)
                             ->columnSpanFull(),
 
-                        \Filament\Forms\Components\TextInput::make('bank_name')
-                            ->label('Nama Bank')
-                            ->nullable()
+                        \Filament\Forms\Components\Select::make('bank_account_id')
+                            ->relationship('bankAccount', 'bank_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->bank_name . ' - ' . $record->account_number . ' a.n ' . $record->account_name)
+                            ->label('Rekening Tujuan (Dipilih oleh Penyewa)')
+                            ->disabled()
                             ->columnSpanFull(),
 
                         \Filament\Forms\Components\FileUpload::make('payment_proof')
@@ -100,20 +103,16 @@ class PaymentForm
                         \Filament\Forms\Components\Placeholder::make('payment_proof_preview')
                             ->label('Foto Bukti Transfer (Abaikan jika tunai)')
                             ->content(function ($record) {
-                                if (!$record || !$record->payment_proof) return 'Tidak ada foto bukti transfer.';
+                                if (!$record || !$record->payment_proof) return new \Illuminate\Support\HtmlString("<span style='color: #94a3b8; font-style: italic;'>Tidak ada foto bukti transfer.</span>");
                                 $url = asset('storage/' . $record->payment_proof);
-                                return new \Illuminate\Support\HtmlString('
-                                    <div x-data="{ open: false }">
-                                        <img src="'.$url.'" @click="open = true" class="h-48 rounded-lg cursor-pointer transition hover:opacity-80 border border-gray-200 dark:border-gray-700 shadow-sm" />
-                                        
-                                        <div x-show="open" style="display: none;" class="fixed inset-0 z-[999] flex items-center justify-center bg-black/80 backdrop-blur-sm" @click="open = false">
-                                            <img src="'.$url.'" class="max-h-[90vh] max-w-[90vw] rounded-xl shadow-2xl" @click.stop />
-                                            <button @click="open = false" class="absolute top-6 right-6 text-white hover:text-gray-300 bg-gray-900/50 rounded-full p-2">
-                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                            </button>
-                                        </div>
+                                return new \Illuminate\Support\HtmlString("
+                                    <div style='margin-top: 10px;'>
+                                        <a href='{$url}' target='_blank'>
+                                            <img src='{$url}' style='max-width: 100%; max-height: 350px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;' alt='Bukti Transfer'/>
+                                        </a>
+                                        <p style='margin-top: 8px; font-size: 0.85rem; color: #64748b;'>Klik gambar untuk melihat ukuran penuh di tab baru.</p>
                                     </div>
-                                ');
+                                ");
                             })
                             ->hidden(fn (string $operation) => $operation === 'create')
                             ->columnSpanFull(),

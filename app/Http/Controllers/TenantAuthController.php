@@ -30,10 +30,25 @@ class TenantAuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
 
-            // Cek role, jika admin arahkan ke panel admin, jika penyewa ke beranda
+            // Cek role, jika admin tolak akses dari portal penyewa
             if (Auth::user()->role === 'admin') {
-                return redirect()->intended('/admin');
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                return back()->withErrors([
+                    'email' => 'Akun Administrator tidak diizinkan masuk melalui portal Penyewa.',
+                ])->onlyInput('email');
             }
+            
+            // Ambil URL intended dari session
+            $intendedUrl = redirect()->intended('/')->getTargetUrl();
+            $path = parse_url($intendedUrl, PHP_URL_PATH);
+            
+            // Jika penyewa tapi URL intendednya adalah area admin, buang ke home
+            if ($path && str_starts_with($path, '/admin')) {
+                return redirect('/');
+            }
+            
             return redirect()->intended('/');
         }
 
@@ -70,6 +85,7 @@ class TenantAuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'penyewa', // Default role untuk registrasi publik
+            'gender' => 'P', // Default rusunawa putri
         ]);
 
         Auth::login($user);

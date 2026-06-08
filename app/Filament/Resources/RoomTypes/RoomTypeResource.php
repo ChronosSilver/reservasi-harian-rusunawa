@@ -67,6 +67,13 @@ class RoomTypeResource extends Resource
             ]);
     }
 
+    public static function getWidgets(): array
+    {
+        return [
+            Widgets\RoomTypeStats::class,
+        ];
+    }
+
     public static function getRelations(): array
     {
         return [

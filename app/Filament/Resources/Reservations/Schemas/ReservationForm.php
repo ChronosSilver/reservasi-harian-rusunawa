@@ -119,6 +119,33 @@ class ReservationForm
                                 $set('room_id', null);
                                 self::calculateTotalPrice($set, $get);
                             })
+                            ->rule(static function ($get, ?\App\Models\Reservation $record) {
+                                return static function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    $typeId = $get('room_type_id');
+                                    $checkIn = $get('check_in_date');
+                                    $checkOut = $get('check_out_date');
+
+                                    if ($typeId && $checkIn && $checkOut) {
+                                        $roomType = \App\Models\RoomType::find($typeId);
+                                        if (!$roomType) return;
+                                        
+                                        $totalRooms = \App\Models\Room::where('room_type_id', $typeId)
+                                            ->where('status', '!=', 'maintenance')
+                                            ->count();
+                                        
+                                        $overlappingReservations = \App\Models\Reservation::where('room_type_id', $typeId)
+                                            ->whereIn('status', ['pending', 'confirmed', 'active'])
+                                            ->where('check_in_date', '<', $checkOut)
+                                            ->where('check_out_date', '>', $checkIn)
+                                            ->when($record, fn ($q) => $q->where('id', '!=', $record->id))
+                                            ->count();
+                                            
+                                        if ($overlappingReservations >= $totalRooms) {
+                                            $fail("Tidak ada kamar bertipe {$roomType->name} yang tersedia secara penuh pada rentang tanggal tersebut.");
+                                        }
+                                    }
+                                };
+                            })
                             ->label('Tipe Kamar'),
 
                         // 2. INPUT KONTRAK WAKTU
@@ -149,7 +176,7 @@ class ReservationForm
                             })
                             ->label('Rencana Check-Out'),
 
-                        // 3. NOMOR KAMAR (Dipindah ke bawah tanggal)
+                        // 3. NOMOR KAMAR (Disembunyikan pada saat create)
                         Select::make('room_id')
                             ->nullable()
                             ->native(false)
@@ -157,6 +184,7 @@ class ReservationForm
                             ->preload()
                             ->placeholder(fn ($get) => (!$get('check_in_date') || !$get('check_out_date') || !$get('room_type_id')) ? 'Pilih Tipe & Tanggal Dulu' : 'Pilih Kamar Tersedia')
                             ->label('Nomor Kamar')
+                            ->hidden(fn (string $operation) => $operation === 'create')
                             ->relationship(
                                 name: 'room',
                                 titleAttribute: 'room_number',
@@ -298,18 +326,29 @@ class ReservationForm
                             ->dehydrated()
                             ->required(),
 
-                        \Filament\Forms\Components\TextInput::make('bank_name')
-                            ->label('Nama Bank')
-                            ->nullable(),
+                        \Filament\Forms\Components\Select::make('bank_account_id')
+                            ->relationship('bankAccount', 'bank_name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->bank_name . ' - ' . $record->account_number . ' a.n ' . $record->account_name)
+                            ->label('Rekening Tujuan (Dipilih oleh Penyewa)')
+                            ->disabled()
+                            ->columnSpanFull(),
 
-                        \Filament\Forms\Components\TextInput::make('bank_account')
-                            ->label('Nomor Rekening')
-                            ->nullable(),
-
-                        \Filament\Forms\Components\FileUpload::make('payment_proof')
-                            ->label('Upload Bukti Transfer')
-                            ->image()
-                            ->directory('bukti-transfer')
+                        \Filament\Forms\Components\Placeholder::make('payment_proof_preview')
+                            ->label('Bukti Transfer yang Diunggah')
+                            ->content(function ($record) {
+                                if ($record && $record->payment_proof) {
+                                    $url = asset('storage/' . $record->payment_proof);
+                                    return new \Illuminate\Support\HtmlString("
+                                        <div style='margin-top: 10px;'>
+                                            <a href='{$url}' target='_blank'>
+                                                <img src='{$url}' style='max-width: 100%; max-height: 350px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;' alt='Bukti Transfer'/>
+                                            </a>
+                                            <p style='margin-top: 8px; font-size: 0.85rem; color: #64748b;'>Klik gambar untuk memperbesar.</p>
+                                        </div>
+                                    ");
+                                }
+                                return new \Illuminate\Support\HtmlString("<span style='color: #94a3b8; font-style: italic;'>Belum ada bukti transfer yang diunggah.</span>");
+                            })
                             ->columnSpanFull(),
 
                         \Filament\Schemas\Components\Actions::make([

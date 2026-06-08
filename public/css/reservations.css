@@ -84,9 +84,10 @@
     display: inline-block;
 }
 .badge-pending { background-color: #fef3c7; color: #92400e; }
-.badge-approved { background-color: #dbeafe; color: #1e40af; }
+.badge-confirmed { background-color: #d1fae5; color: #065f46; }
 .badge-active { background-color: #dbeafe; color: #1e40af; }
-.badge-completed { background-color: #d1fae5; color: #065f46; }
+.badge-completed { background-color: #f1f5f9; color: #475569; }
+.badge-refunding { background-color: #fef3c7; color: #92400e; }
 .badge-cancelled { background-color: #fee2e2; color: #991b1b; }
 .badge-rejected { background-color: #fee2e2; color: #991b1b; }
 
@@ -490,4 +491,17 @@
 .btn-action-outline {
     padding: 10px 20px;
     border-radius: 30px;
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    transition: opacity 0.2s;
+}
+.dropdown-item {
+    font-size: 14px;
+    color: #334155;
+    transition: background-color 0.2s;
+}
+.dropdown-item:hover {
+    background-color: #f1f5f9;
 }

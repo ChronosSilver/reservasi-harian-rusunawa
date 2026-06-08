@@ -11,13 +11,20 @@ class PaymentsTable
     {
         return $table
             ->columns([
-                \Filament\Tables\Columns\TextColumn::make('reservation.ticket_code')
-                    ->label('Kode Tiket')
+                \Filament\Tables\Columns\TextColumn::make('payment_code')
+                    ->label('Kode Pembayaran')
                     ->searchable()
                     ->sortable()
                     ->copyable()
                     ->weight('bold')
                     ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                \Filament\Tables\Columns\TextColumn::make('reservation.ticket_code')
+                    ->label('Kode Tiket')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
                     ->toggleable(),
                     
                 \Filament\Tables\Columns\TextColumn::make('reservation.user.name')
@@ -30,6 +37,11 @@ class PaymentsTable
                     ->money('IDR', locale: 'id')
                     ->sortable()
                     ->toggleable(),
+
+                \Filament\Tables\Columns\TextColumn::make('bankAccount.bank_name')
+                    ->label('Bank Tujuan')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 \Filament\Tables\Columns\TextColumn::make('reservation.payment_method')
                     ->label('Metode')
@@ -67,7 +79,13 @@ class PaymentsTable
                     ->label('Dibayar Pada')
                     ->dateTime('d M Y, H:i')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
+                    
+                \Filament\Tables\Columns\TextColumn::make('verified_at')
+                    ->label('Diverifikasi Pada')
+                    ->dateTime('d M Y, H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                     
                 \Filament\Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat Pada')
@@ -94,12 +112,12 @@ class PaymentsTable
                         ->color('success')
                         ->requiresConfirmation()
                         ->modalHeading('Verifikasi Pembayaran')
-                        ->modalDescription('Apakah dana sudah benar-benar masuk? Tindakan ini akan mencatat waktu pembayaran dan mengubah status reservasi.')
+                        ->modalDescription('Apakah dana sudah benar-benar masuk? Tindakan ini akan mencatat waktu verifikasi dan mengubah status reservasi.')
                         ->disabled(fn (Payment $record) => !in_array($record->status, ['pending', 'paid']))
                         ->action(function (Payment $record) {
                             $record->update([
                                 'status' => 'verified',
-                                'payment_date' => now(),
+                                'verified_at' => now(), // Catat waktu verifikasi
                             ]);
                             $record->reservation->update(['status' => 'confirmed']);
                         }),

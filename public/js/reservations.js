@@ -54,6 +54,66 @@ document.addEventListener('DOMContentLoaded', function() {
     guestSelect.addEventListener('change', calculatePrice);
     durationInput.addEventListener('input', calculatePrice);
 
+    // Ketersediaan Real-time
+    const checkInInput = document.getElementById('check_in_date');
+    const availabilityInfo = document.getElementById('availability_info');
+    const btnConfirm = document.querySelector('.btn-confirm');
+
+    function checkAvailability() {
+        const typeId = typeSelect.value;
+        const checkIn = checkInInput.value;
+        const duration = durationInput.value;
+
+        if (!typeId || !checkIn || !duration) {
+            if(availabilityInfo) availabilityInfo.style.display = 'none';
+            return;
+        }
+
+        const csrfToken = document.querySelector('input[name="_token"]');
+        
+        fetch('/api/check-availability', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken ? csrfToken.value : ''
+            },
+            body: JSON.stringify({
+                room_type_id: typeId,
+                check_in_date: checkIn,
+                duration_days: duration
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(availabilityInfo) {
+                availabilityInfo.style.display = 'block';
+                if (data.available > 0) {
+                    availabilityInfo.style.color = '#10b981'; // Emerald
+                    availabilityInfo.innerHTML = `<svg style="display:inline; vertical-align:middle; margin-right:4px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg> Tersedia: ${data.available} Kamar`;
+                    if (btnConfirm) {
+                        btnConfirm.disabled = false;
+                        btnConfirm.style.opacity = '1';
+                        btnConfirm.style.cursor = 'pointer';
+                    }
+                } else {
+                    availabilityInfo.style.color = '#ef4444'; // Red
+                    availabilityInfo.innerHTML = `<svg style="display:inline; vertical-align:middle; margin-right:4px;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Maaf, Kamar Penuh / Tidak Tersedia`;
+                    if (btnConfirm) {
+                        btnConfirm.disabled = true;
+                        btnConfirm.style.opacity = '0.5';
+                        btnConfirm.style.cursor = 'not-allowed';
+                    }
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching availability:', error));
+    }
+
+    typeSelect.addEventListener('change', checkAvailability);
+    if(checkInInput) checkInInput.addEventListener('change', checkAvailability);
+    durationInput.addEventListener('input', checkAvailability);
+
     // Hitung saat pertama load
     calculatePrice();
+    checkAvailability();
 });

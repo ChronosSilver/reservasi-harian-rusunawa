@@ -10,6 +10,13 @@ class ListReservations extends ListRecords
 {
     protected static string $resource = ReservationResource::class;
 
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            \App\Filament\Resources\Reservations\Widgets\ReservationStats::class,
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -49,6 +49,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <div id="availability_info" class="mt-2" style="font-size: 0.85rem; font-weight: 500; display: none;">
+                                <!-- Konten counter dari JS -->
+                            </div>
                         </div>
 
                         <div>
@@ -121,6 +124,6 @@
 </div>
 
 @push('scripts')
-<script src="{{ asset('js/reservations.js') }}"></script>
+<script src="{{ asset('js/reservations.js') }}?v={{ filemtime(public_path('js/reservations.js')) }}"></script>
 @endpush
 @endsection

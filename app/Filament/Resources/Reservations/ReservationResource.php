@@ -219,6 +219,13 @@ class ReservationResource extends Resource
         ]);
 }
 
+    public static function getWidgets(): array
+    {
+        return [
+            Widgets\ReservationStats::class,
+        ];
+    }
+
     public static function getRelations(): array
     {
         return [
