@@ -41,11 +41,12 @@ class ReservationResource extends Resource
     {
         return $table
             ->poll('10s')
+            ->defaultSort('created_at', 'desc')
             ->defaultPaginationPageOption(25)
             ->columns([
             Tables\Columns\TextColumn::make('ticket_code')
                 ->label('Kode Tiket')
-                ->searchable()
+                ->searchable(isIndividual: true)
                 ->sortable()
                 ->copyable()
                 ->copyMessage('Kode Tiket disalin')
@@ -55,9 +56,29 @@ class ReservationResource extends Resource
 
             Tables\Columns\TextColumn::make('user.name')
                 ->label('Nama Penyewa')
-                ->searchable()
+                ->searchable(isIndividual: true)
                 ->sortable()
-                ->toggleable(),
+                ->toggleable()
+                ->color('primary')
+                ->weight('bold')
+                ->action(
+                    \Filament\Actions\Action::make('viewUser')
+                        ->modalHeading('Detail Penyewa')
+                        ->modalSubmitAction(false)
+                        ->modalCancelAction(fn ($action) => $action->label('Tutup'))
+                        ->infolist([
+                            \Filament\Schemas\Components\Section::make('Informasi Pribadi')
+                                ->schema([
+                                    \Filament\Infolists\Components\TextEntry::make('user.name')->label('Nama Lengkap'),
+                                    \Filament\Infolists\Components\TextEntry::make('user.email')->label('Email')->default('-'),
+                                    \Filament\Infolists\Components\TextEntry::make('user.phone_number')->label('No. Telepon')->default('-'),
+                                    \Filament\Infolists\Components\TextEntry::make('user.identity_type')->label('Tipe Identitas')->default('-'),
+                                    \Filament\Infolists\Components\TextEntry::make('user.identity_number')->label('Nomor Identitas')->default('-'),
+                                    \Filament\Infolists\Components\TextEntry::make('user.gender')->label('Jenis Kelamin')
+                                        ->formatStateUsing(fn ($state) => $state === 'L' ? 'Laki-Laki' : ($state === 'P' ? 'Perempuan' : '-')),
+                                ])->columns(2),
+                        ])
+                ),
 
             Tables\Columns\TextColumn::make('roomType.name')
                 ->label('Tipe Kamar')
@@ -88,7 +109,7 @@ class ReservationResource extends Resource
                 ->label('Total Tagihan')
                 ->money('IDR', locale: 'id') // Output: Rp 150.000,00
                 ->sortable()
-                ->toggleable(),
+                ->toggleable(isToggledHiddenByDefault: true),
 
             // 5. Audit Status Visual
             Tables\Columns\TextColumn::make('status')
@@ -109,7 +130,7 @@ class ReservationResource extends Resource
                 ->label('Dibuat Pada')
                 ->dateTime('d M Y H:i')
                 ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
+                ->toggleable(),
         ])
         ->filters([
             // Filter cepat berdasarkan status di kanan atas tabel

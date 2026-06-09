@@ -19,7 +19,9 @@ class RoomForm
                         ->schema([
                             TextInput::make('room_number')
                                 ->label('Nomor Kamar')
-                                ->required(),
+                                ->required()
+                                ->disabled(fn (string $operation) => $operation === 'edit')
+                                ->dehydrated(),
                             Select::make('room_type_id')
                                 ->label('Tipe Kamar')
                                 ->relationship('roomType', 'name')
@@ -36,7 +38,9 @@ class RoomForm
                                 ->default('Rusunawa Putri')
                                 ->native(false)
                                 ->selectablePlaceholder(false)
-                                ->required(),
+                                ->required()
+                                ->disabled(fn (string $operation) => $operation === 'edit')
+                                ->dehydrated(),
                             TextInput::make('capacity')
                                 ->label('Kapasitas')
                                 ->required()

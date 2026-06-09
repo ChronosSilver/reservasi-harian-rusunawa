@@ -42,7 +42,8 @@
                         'payment' => $reservation->payment_method == 'transfer' ? 'Transfer Bank' : 'Tunai',
                         'total' => 'Rp ' . number_format($reservation->total_price, 0, ',', '.'),
                         'status' => strtoupper($reservation->status),
-                        'statusClass' => 'badge-' . strtolower($reservation->status)
+                        'statusClass' => 'badge-' . strtolower($reservation->status),
+                        'createdAt' => \Carbon\Carbon::parse($reservation->created_at)->format('d M Y H:i')
                     ]) }}">
                         
                         <div class="flex-1-min-280">
@@ -158,6 +159,10 @@
                 <span class="badge" id="modal-status"></span>
             </div>
             
+            <div class="modal-detail-row">
+                <span class="modal-detail-label">Dibuat Pada</span>
+                <span class="modal-detail-value" id="modal-created-at"></span>
+            </div>
             <div class="modal-detail-row">
                 <span class="modal-detail-label">Tipe Kamar</span>
                 <span class="modal-detail-value" id="modal-room"></span>

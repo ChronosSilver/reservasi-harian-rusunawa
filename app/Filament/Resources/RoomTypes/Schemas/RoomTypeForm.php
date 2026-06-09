@@ -22,7 +22,9 @@ class RoomTypeForm
                                 ->default('AC')
                                 ->native(false)
                                 ->selectablePlaceholder(false)
-                                ->required(),
+                                ->required()
+                                ->disabled(fn (string $operation) => $operation === 'edit')
+                                ->dehydrated(),
                             TextInput::make('base_price')
                                 ->label('Harga Dasar')
                                 ->required()

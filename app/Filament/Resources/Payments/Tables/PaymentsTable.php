@@ -10,26 +10,20 @@ class PaymentsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('updated_at', 'desc')
             ->columns([
                 \Filament\Tables\Columns\TextColumn::make('payment_code')
-                    ->label('Kode Pembayaran')
-                    ->searchable()
+                    ->label('Kode Tiket Pembayaran')
+                    ->searchable(isIndividual: true)
                     ->sortable()
                     ->copyable()
                     ->weight('bold')
-                    ->color('primary')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->color('primary'),
 
-                \Filament\Tables\Columns\TextColumn::make('reservation.ticket_code')
-                    ->label('Kode Tiket')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable()
-                    ->toggleable(),
-                    
+
                 \Filament\Tables\Columns\TextColumn::make('reservation.user.name')
                     ->label('Nama Penyewa')
-                    ->searchable()
+                    ->searchable(isIndividual: true)
                     ->toggleable(),
 
                 \Filament\Tables\Columns\TextColumn::make('amount')

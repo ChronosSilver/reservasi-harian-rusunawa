@@ -204,6 +204,7 @@ function closePaymentDetailModal() {
 
 function openReservationModal(data) {
     document.getElementById('modal-ticket').innerText = data.ticket;
+    document.getElementById('modal-created-at').innerText = data.createdAt;
     document.getElementById('modal-room').innerText = data.room;
     document.getElementById('modal-checkin').innerText = data.checkIn;
     document.getElementById('modal-checkout').innerText = data.checkOut;

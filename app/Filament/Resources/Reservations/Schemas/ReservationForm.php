@@ -48,6 +48,12 @@ class ReservationForm
                     \Filament\Schemas\Components\Section::make('Informasi Reservasi')
                         ->description('Detail penyewa, kamar, dan jadwal inap.')
                         ->schema([
+                        TextInput::make('ticket_code')
+                            ->label('Kode Tiket Reservasi')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->columnSpanFull()
+                            ->hidden(fn ($record) => $record === null),
                         // 1. INPUT RELASI
                         Select::make('user_id')
                             ->relationship('user', 'name', fn (\Illuminate\Database\Eloquent\Builder $query) => $query->where('role', 'penyewa'))
@@ -309,6 +315,11 @@ class ReservationForm
                     ->addable(false) // Tidak bisa tambah tagihan manual dari sini (karena sudah otomatis terbuat)
                     ->deletable(false) // Tidak bisa dihapus untuk menjaga riwayat
                     ->schema([
+                        \Filament\Forms\Components\TextInput::make('payment_code')
+                            ->label('Kode Tiket Pembayaran')
+                            ->disabled()
+                            ->columnSpanFull(),
+
                         \Filament\Forms\Components\TextInput::make('payment_date')
                             ->label('Tanggal Pembayaran Terakhir')
                             ->disabled(), // Tetap tidak bisa diedit manual sesuai permintaan
